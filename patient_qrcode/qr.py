@@ -13,27 +13,23 @@ def generate_qr_code(doc, method=None):
 
     base_url = frappe.utils.get_url()
 
-    asset_url = f"patient/{doc.name}"
-
-    
     values = [
-        doc.name,                                     
-        doc.custom_trial_id,
-        doc.custom_patient_initials,
-        doc.dob,
-        doc.sex,
-        doc.blood_group,
-        doc.custom_weight_on_the_day_of_leukapheresis,
-        doc.custom_hospital_id_uhid,
-        asset_url
+        doc.name or "NA",                                     
+        doc.custom_trial_id or "NA",
+        doc.custom_patient_initials or "NA",
+        doc.dob or "NA",
+        doc.sex or "NA",
+        doc.blood_group or "NA",
+        doc.custom_weight_on_the_day_of_leukapheresis or "NA",
+        doc.custom_hospital_id_uhid or "NA"
     ]
 
     encoded_values = [
-        urllib.parse.quote(str(v), safe="") if v else ""
+        urllib.parse.quote(str(v), safe="")
         for v in values
     ]
 
-    qr_url = f"{base_url}/patient/test/" + "/".join(encoded_values)
+    qr_url = f"{base_url}/patient/{'/'.join(encoded_values)}"
 
     print("QR URL:", qr_url)
 
