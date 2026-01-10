@@ -8,13 +8,17 @@ import urllib.parse
 @frappe.whitelist()
 def generate_qr_code(doc, method=None):
 
+    # 🚨 Do not generate QR until document is saved
+    if not doc.name:
+        return
+
     if doc.custom_base64data:
         return
 
     base_url = frappe.utils.get_url()
 
     values = [
-        doc.name or "NA",                                     
+        doc.name, 
         doc.custom_trial_id or "NA",
         doc.custom_patient_initials or "NA",
         doc.dob or "NA",
