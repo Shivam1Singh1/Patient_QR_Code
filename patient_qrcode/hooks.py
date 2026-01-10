@@ -9,7 +9,7 @@ app_license = "mit"
 # Includes in <head>
 # ------------------
 
-# include js, css files in header of desk.html
+# include js, css  files in header of desk.html
 # app_include_css = "/assets/patient_qrcode/css/patient_qrcode.css"
 # app_include_js = "/assets/patient_qrcode/js/patient_qrcode.js"
 
@@ -121,12 +121,12 @@ app_license = "mit"
 # Document Events
 # ---------------
 # Hook on document methods and events
-
 doc_events = {
     "Patient": {
         "before_insert": "patient_qrcode.qr.generate_qr_code"
     }
 }
+
 
 
 # Scheduled Tasks
