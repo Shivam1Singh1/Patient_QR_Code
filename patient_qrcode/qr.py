@@ -8,7 +8,6 @@ import urllib.parse
 @frappe.whitelist()
 def generate_qr_code(doc, method=None):
 
-    # 🚨 Do not generate QR until document is saved
     if not doc.name:
         return
 
