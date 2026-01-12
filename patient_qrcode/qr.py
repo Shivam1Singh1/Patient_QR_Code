@@ -19,14 +19,15 @@ def generate_qr_code(doc, method=None):
             "pid": doc.name,
 
             "trial_id": doc.get("custom_trial_id"),
-            "initials": doc.get("custom_patiant_initials"),
+            "initials": doc.get("custom_patient_initials"),
             "dob": doc.get("dob"),
             "gender": doc.get("sex"),
             "blood_group": doc.get("blood_group"),
             "weight": doc.get("custom_weight_on_the_day_of_leukapheresis"),
             "uhid": doc.get("custom_hospital_id_uhid"),
+            "user_id": doc.get("user_id"),
 
-            "redirect_to": f"/app/patient/{urllib.parse.quote(doc.name)}"  # redirects to full Patient record after login
+            "redirect_to": f"/app/patient/{urllib.parse.quote(doc.name)}"
         }
 
         params = {k: v for k, v in params.items() if v}
