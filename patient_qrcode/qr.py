@@ -7,9 +7,7 @@ import urllib.parse
 
 def generate_qr_code(doc, method=None):
     try:
-        if method != "after_insert":
-            return
-
+        # QR already generated
         if doc.custom_base64data:
             return
 
@@ -17,19 +15,17 @@ def generate_qr_code(doc, method=None):
 
         params = {
             "pid": doc.name,
-
             "trial_id": doc.get("custom_trial_id"),
             "initials": doc.get("custom_patient_initials"),
             "dob": doc.get("dob"),
             "gender": doc.get("sex"),
             "blood_group": doc.get("blood_group"),
             "weight": doc.get("custom_weight_on_the_day_of_leukapheresis"),
-            "uhid": doc.get("custom_hospital_id_uhid"),
-            "user_id": doc.get("user_id"),
-
+            "uid": doc.get("custom_hospital_id_uhid"),
             "redirect_to": f"/app/patient/{urllib.parse.quote(doc.name)}"
         }
 
+        # remove empty values
         params = {k: v for k, v in params.items() if v}
 
         query_string = urllib.parse.urlencode(
@@ -54,8 +50,8 @@ def generate_qr_code(doc, method=None):
         img.save(buffer, format="PNG")
 
         base64_data = (
-            "data:image/png;base64," +
-            base64.b64encode(buffer.getvalue()).decode()
+            "data:image/png;base64,"
+            + base64.b64encode(buffer.getvalue()).decode()
         )
 
         doc.db_set(
@@ -63,8 +59,6 @@ def generate_qr_code(doc, method=None):
             base64_data,
             update_modified=False
         )
-
-        frappe.db.commit()
 
         frappe.logger().info(
             f"QR Code generated successfully for Patient {doc.name}"
