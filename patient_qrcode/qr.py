@@ -5,54 +5,73 @@ import base64
 import urllib.parse
 
 
-@frappe.whitelist()
 def generate_qr_code(doc, method=None):
+    try:
+        if method != "after_insert":
+            return
 
-    if not doc.name:
-        return
+        if doc.custom_base64data:
+            return
 
-    if doc.custom_base64data:
-        return
+        base_url = frappe.utils.get_url()
 
-    base_url = frappe.utils.get_url()
+        params = {
+            "pid": doc.name,
 
-    values = [
-        doc.name, 
-        doc.custom_trial_id or "NA",
-        doc.custom_patient_initials or "NA",
-        doc.dob or "NA",
-        doc.sex or "NA",
-        doc.blood_group or "NA",
-        doc.custom_weight_on_the_day_of_leukapheresis or "NA",
-        doc.custom_hospital_id_uhid or "NA"
-    ]
+            "trial_id": doc.get("custom_trial_id"),
+            "initials": doc.get("custom_patiant_initials"),
+            "dob": doc.get("dob"),
+            "gender": doc.get("sex"),
+            "blood_group": doc.get("blood_group"),
+            "weight": doc.get("custom_weight_on_the_day_of_leukapheresis"),
+            "uhid": doc.get("custom_hospital_id_uhid"),
 
-    encoded_values = [
-        urllib.parse.quote(str(v), safe="")
-        for v in values
-    ]
+            "redirect_to": f"/app/patient/{urllib.parse.quote(doc.name)}"  # redirects to full Patient record after login
+        }
 
-    qr_url = f"{base_url}/patient/{'/'.join(encoded_values)}"
+        params = {k: v for k, v in params.items() if v}
 
-    print("QR URL:", qr_url)
+        query_string = urllib.parse.urlencode(
+            params, quote_via=urllib.parse.quote
+        )
 
-    qr = qrcode.QRCode(
-        version=None,
-        error_correction=qrcode.constants.ERROR_CORRECT_M,
-        box_size=6,
-        border=4
-    )
+        qr_url = f"{base_url}/patient-summary?{query_string}"
 
-    qr.add_data(qr_url)
-    qr.make(fit=True)
+        qr = qrcode.QRCode(
+            version=None,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,
+            box_size=6,
+            border=4
+        )
 
-    img = qr.make_image(fill_color="black", back_color="white")
+        qr.add_data(qr_url)
+        qr.make(fit=True)
 
-    buffer = BytesIO()
-    img.save(buffer, format="PNG")
+        img = qr.make_image(fill_color="black", back_color="white")
 
-    doc.db_set(
-        "custom_base64data",
-        "data:image/png;base64," +
-        base64.b64encode(buffer.getvalue()).decode()
-    )
+        buffer = BytesIO()
+        img.save(buffer, format="PNG")
+
+        base64_data = (
+            "data:image/png;base64," +
+            base64.b64encode(buffer.getvalue()).decode()
+        )
+
+        doc.db_set(
+            "custom_base64data",
+            base64_data,
+            update_modified=False
+        )
+
+        frappe.db.commit()
+
+        frappe.logger().info(
+            f"QR Code generated successfully for Patient {doc.name}"
+        )
+
+    except Exception as e:
+        frappe.log_error(
+            title="QR Code Generation Error",
+            message=f"Patient: {doc.name}\nError: {str(e)}"
+        )
+        frappe.throw("Failed to generate QR Code")

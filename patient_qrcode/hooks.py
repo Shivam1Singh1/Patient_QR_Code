@@ -121,11 +121,14 @@ app_license = "mit"
 # Document Events
 # ---------------
 # Hook on document methods and events
+
 doc_events = {
     "Patient": {
-        "before_insert": "patient_qrcode.qr.generate_qr_code"
+        "after_insert": "patient_qrcode.qr.generate_qr_code"
     }
 }
+
+
 
 
 
