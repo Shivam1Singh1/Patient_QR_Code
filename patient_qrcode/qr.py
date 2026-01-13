@@ -8,8 +8,8 @@ import urllib.parse
 def generate_qr_code(doc, method=None):
     try:
         # QR already generated
-        if doc.custom_base64data:
-            return
+        # if doc.custom_base64data:
+        #     return
         base_url = frappe.utils.get_url()
         params = {
             "pid": doc.name,
