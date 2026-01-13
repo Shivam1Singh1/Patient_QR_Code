@@ -5,6 +5,7 @@ import base64
 import urllib.parse
 
 
+@frappe.whitelist()
 def generate_qr_code(doc, method=None):
     try:
         # QR already generated
