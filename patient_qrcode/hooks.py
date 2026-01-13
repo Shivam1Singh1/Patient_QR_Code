@@ -124,7 +124,7 @@ app_license = "mit"
 
 doc_events = {
     "Patient": {
-        "after_insert": "patient_qrcode.qr.generate_qr_code"
+        "on_update": "patient_qrcode.qr.generate_qr_code"
     }
 }
 
