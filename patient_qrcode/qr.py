@@ -232,10 +232,5 @@ def get_item_qr_codes_for_table(cart_manufacturing_name):
         img.save(buffer, format="PNG")
         qr_base64 = f"data:image/png;base64,{base64.b64encode(buffer.getvalue()).decode()}"
 
-        qr_data[item.name] = {
-            "qr_code": qr_base64,
-            "dose": item.dose or "N/A",
-            "qty": item.qty
-        }
-
-    return qr_data
+        
+    return qr_base64
