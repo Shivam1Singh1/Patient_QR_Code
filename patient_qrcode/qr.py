@@ -189,48 +189,73 @@ def get_item_qr_codes_for_table(cart_manufacturing_name):
     """
     Generate QR codes for items in CarT Manufacturing table (with URL)
     """
-    doc = frappe.get_doc("CarT Manufacturing", cart_manufacturing_name)
-    
-    if not doc.patient or not doc.batch:
-        return {}
-
-    patient = frappe.get_doc("Patient", doc.patient)
-    patient_name = patient.patient_name or doc.patient
-    base_url = frappe.utils.get_url()
-
-    qr_data = {}
-
-    for item in doc.items:
-        # Create URL with parameters instead of plain text
-        item_params = {
-            "manufacturing": doc.name,
-            "batch": doc.batch,
-            "patient": patient_name,
-            "pid": doc.patient,
-            "item_code": item.item_code,
-            "item_name": item.item_name,
-            "dose": item.dose or "N/A",
-            "redirect_to": f"/app/cart-manufacturing/{urllib.parse.quote(doc.name)}"
-        }
-        # Remove empty values
-        item_params = {k: v for k, v in item_params.items() if v}
-        item_query_string = urllib.parse.urlencode(item_params, quote_via=urllib.parse.quote)
-        item_qr_url = f"{base_url}/cart-item?{item_query_string}"
-
-        # Generate QR code with URL
-        qr = qrcode.QRCode(
-            version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_M,
-            box_size=8,
-            border=4
-        )
-        qr.add_data(item_qr_url)
-        qr.make(fit=True)
-        img = qr.make_image(fill_color="black", back_color="white")
-
-        buffer = BytesIO()
-        img.save(buffer, format="PNG")
-        qr_base64 = f"data:image/png;base64,{base64.b64encode(buffer.getvalue()).decode()}"
-
+    try:
+        frappe.logger().info(f"Starting QR code generation for: {cart_manufacturing_name}")
         
-    return qr_base64
+        doc = frappe.get_doc("CarT Manufacturing", cart_manufacturing_name)
+        
+        if not doc.patient or not doc.batch:
+            frappe.logger().warning(f"Missing patient or batch for {cart_manufacturing_name}")
+            return {}
+        
+        patient = frappe.get_doc("Patient", doc.patient)
+        patient_name = patient.patient_name or doc.patient
+        base_url = frappe.utils.get_url()
+        qr_data = {}
+        
+        frappe.logger().info(f"Processing {len(doc.items)} items for patient: {patient_name}")
+        
+        for item in doc.items:
+            try:
+                frappe.logger().debug(f"Generating QR for item: {item.item_code}")
+                
+                # Create URL with parameters instead of plain text
+                item_params = {
+                    "manufacturing": doc.name,
+                    "batch": doc.batch,
+                    "patient": patient_name,
+                    "pid": doc.patient,
+                    "item_code": item.item_code,
+                    "item_name": item.item_name,
+                    "dose": item.dose or "N/A",
+                    "redirect_to": f"/app/cart-manufacturing/{urllib.parse.quote(doc.name)}"
+                }
+                # Remove empty values
+                item_params = {k: v for k, v in item_params.items() if v}
+                item_query_string = urllib.parse.urlencode(item_params, quote_via=urllib.parse.quote)
+                item_qr_url = f"{base_url}/cart-item?{item_query_string}"
+                
+                # Generate QR code with URL
+                qr = qrcode.QRCode(
+                    version=1,
+                    error_correction=qrcode.constants.ERROR_CORRECT_M,
+                    box_size=8,
+                    border=4
+                )
+                qr.add_data(item_qr_url)
+                qr.make(fit=True)
+                img = qr.make_image(fill_color="black", back_color="white")
+                
+                buffer = BytesIO()
+                img.save(buffer, format="PNG")
+                qr_base64 = f"data:image/png;base64,{base64.b64encode(buffer.getvalue()).decode()}"
+                
+                # Store QR code with additional item info
+                qr_data[item.name] = {
+                    "qr_code": qr_base64,
+                    "dose": item.dose or "N/A",
+                    "qty": item.qty
+                }
+                
+            except Exception as e:
+                frappe.logger().error(f"Error generating QR for item {item.item_code}: {str(e)}")
+                frappe.log_error(frappe.get_traceback(), f"QR Generation Error - {item.item_code}")
+                continue
+        
+        frappe.logger().info(f"Successfully generated {len(qr_data)} QR codes for {cart_manufacturing_name}")
+        return qr_data
+        
+    except Exception as e:
+        frappe.logger().error(f"Fatal error in get_item_qr_codes_for_table: {str(e)}")
+        frappe.log_error(frappe.get_traceback(), f"QR Generation Fatal Error - {cart_manufacturing_name}")
+        return {}
